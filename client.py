@@ -22,11 +22,33 @@ port=int(os.environ.get('port'))
 # 현재 사용중인 PC(여기선 라즈베리파이)의 IP가져오기
 ip=[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
 ip=[i for i in (ip.split('.'))]
+def get_damid():
+    with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock:
+        sock.connect((host, port))
+        sock.sendall(b'\x02'+b'\x01'+b'\x03')
+        recv=sock.recv(1024)
+        print(int(recv[2]))
+        sock.close()
+        return recv[2]
 
+def checkDB(Type):
+    with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock:
+        sock.connect((host, port))
+        
+        sock.sendall(b'\x02'+b'\x02'+chr(int(Type)).encode()+b'\x03')
+        print(chr(int(Type)).encode())
+        sock.recv(1024)
+        sock.close()
 
 def run_client(Type,Data):
+    checkDB(Type/10)
+    
+
+
+
     """
-    Type: WATER_LEVEL|LIGHT|WORK_NMPR  순서대로 수위,조도,출입
+    Type: 1의 자리: 데이터 종류 
+    10의 자리부터: 댐 번호
     """
     #측정 시간
     now=datetime.datetime.now()
@@ -46,7 +68,8 @@ def run_client(Type,Data):
         #현재 문제점: 1.문자로 인코딩하면 자바에서 ip주소가 3자리인지 2자리인지 구분 불가 
         #             2.숫자로 인코딩하면 가끔 ip값중 10이 있다면 자바에서 end of line으로 취급해서 그 다음을 안읽음
         # message=STX+TYPE_A+''.join(ip).encode()+year.encode()+month.encode()+day.encode()+hour.encode()+minute.encode()+second.encode()
-        message=STX+Type
+        message=STX+chr(Type).encode()
+        print(chr(Type).encode())
         length=None
         ipEncode= None
         for i in ip:
@@ -58,11 +81,12 @@ def run_client(Type,Data):
                 ipEncode= ipEncode+str(i).encode()
         timemessage=year.encode()+month.encode()+day.encode()+hour.encode()+minute.encode()+second.encode()
         datamessage=str(len(str(Data))).encode()+str(Data).encode()
-        
-        message=message+length+ipEncode+timemessage+datamessage+ETX+'\n'.encode()   
+        print(year.encode())
+        message=message=message+timemessage+datamessage+ETX+'\n'.encode()   
 
 
         print("보낸 메시지"+message.decode())
+
 
         #메시지를 서버에 보냄.
         sock.sendall(message)
@@ -70,8 +94,8 @@ def run_client(Type,Data):
         #아직 리시브 메시지를 구현안함... 구현하면 주석제거    
         # recive=sock.recv(1024)
                 
-        # print(recive.decode(),"recive")
-       
-        sock.close()
 
-run_client(TYPE_A,12)
+        # print(recive.decode(),"recive")
+        
+        sock.close()
+# run_client(13,12)
