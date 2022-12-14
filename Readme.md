@@ -1,6 +1,6 @@
-#댐 관리 프로젝트(client)
+# 댐 관리 프로젝트(client)
 
-##project info
+## project info
 
 > 라즈베리파이를 이용한 소켓통신을 사용하기 위해 만든 코드
 >
